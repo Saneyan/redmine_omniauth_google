@@ -38,7 +38,10 @@ class RedmineOauthController < AccountController
   def try_to_login info
    params[:back_url] = session[:back_url]
    session.delete(:back_url)
-   user = User.find_or_initialize_by_mail(info["email"])
+   #user = User.find_or_initialize_by_mail(info["email"])
+   login = parse_email(info["email"])[:login]
+   login ||= [user.firstname, user.lastname]*"."
+   user = User.where(login: login).first_or_initialize
     if user.new_record?
       # Self-registration off
       redirect_to(home_url) && return unless Setting.self_registration?
@@ -46,9 +49,10 @@ class RedmineOauthController < AccountController
       user.firstname, user.lastname = info["name"].split(' ') unless info['name'].nil?
       user.firstname ||= info[:given_name]
       user.lastname ||= info[:family_name]
-      user.mail = info["email"]
-      user.login = parse_email(info["email"])[:login]
-      user.login ||= [user.firstname, user.lastname]*"."
+      #user.mail = info["email"]
+      #user.login = parse_email(info["email"])[:login]
+      #user.login ||= [user.firstname, user.lastname]*"."
+      user.login = login
       user.random_password
       user.register
 
